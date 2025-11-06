@@ -10,6 +10,7 @@ pred_type <- function(x) {
     cls == "dynamic_survival_metric" ~ "survival",
     cls == "integrated_survival_metric" ~ "survival",
     cls == "static_survival_metric" ~ "time",
+    cls == "pronostic_survival_metric" ~ "linear_pred",
     TRUE ~ "unknown"
   )
   res
@@ -112,6 +113,8 @@ metrics_info <- function(x) {
     )
   } else if (all(types == "time" | types == "survival")) {
     estimate_surv(dat, metric, param_names, outcome_name, case_weights, types)
+  } else if (all(types == "linear_pred")) {
+    estimate_surv(dat, metric, param_names, outcome_name, case_weights, types)
   } else {
     cli::cli_abort("Metric type not yet supported by {.pkg tune}.")
   }
@@ -197,6 +200,26 @@ estimate_surv <- function(
     )
 }
 
+estimate_liner_pred <- function(
+  dat,
+  metric,
+  param_names,
+  outcome_name,
+  case_weights,
+  types
+) {
+  #  potentially need to work around submodel parameters since those are within .pred
+  dat <- unnest_parameters(dat, param_names)
+  dat |>
+    dplyr::group_by(!!!rlang::syms(param_names)) |>
+    metric(
+      truth = !!rlang::sym(outcome_name),
+      estimate = !!maybe_estimate(metric),
+      case_weights = !!case_weights,
+      !!maybe_linear_pred(metric)
+    )
+}
+
 unnest_parameters <- function(x, params = NULL) {
   if (is.null(params)) {
     return(x)
@@ -253,6 +276,17 @@ maybe_surv_prob <- function(x) {
   # dyn_inputs defined in checks.R
   if (any(info$class %in% dyn_inputs)) {
     res <- rlang::sym(".pred")
+  } else {
+    res <- NULL
+  }
+  res
+}
+
+maybe_linear_pred <- function(x) {
+  info <- tibble::as_tibble(x)
+  # dyn_inputs defined in checks.R
+  if (any(info$class == "pronostic_survival_metric")) {
+    res <- rlang::sym(".pred_linear_pred")
   } else {
     res <- NULL
   }
