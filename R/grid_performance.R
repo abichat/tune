@@ -114,7 +114,14 @@ metrics_info <- function(x) {
   } else if (all(types == "time" | types == "survival")) {
     estimate_surv(dat, metric, param_names, outcome_name, case_weights, types)
   } else if (all(types == "linear_pred")) {
-    estimate_surv(dat, metric, param_names, outcome_name, case_weights, types)
+    estimate_linear_pred(
+      dat,
+      metric,
+      param_names,
+      outcome_name,
+      case_weights,
+      types
+    )
   } else {
     cli::cli_abort("Metric type not yet supported by {.pkg tune}.")
   }
@@ -200,7 +207,7 @@ estimate_surv <- function(
     )
 }
 
-estimate_liner_pred <- function(
+estimate_linear_pred <- function(
   dat,
   metric,
   param_names,
