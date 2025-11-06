@@ -111,17 +111,10 @@ metrics_info <- function(x) {
       types,
       event_level
     )
-  } else if (all(types == "time" | types == "survival")) {
+  } else if (
+    all(types == "time" | types == "survival" | types == "linear_pred")
+  ) {
     estimate_surv(dat, metric, param_names, outcome_name, case_weights, types)
-  } else if (all(types == "linear_pred")) {
-    estimate_linear_pred(
-      dat,
-      metric,
-      param_names,
-      outcome_name,
-      case_weights,
-      types
-    )
   } else {
     cli::cli_abort("Metric type not yet supported by {.pkg tune}.")
   }
@@ -203,26 +196,7 @@ estimate_surv <- function(
       truth = !!rlang::sym(outcome_name),
       estimate = !!maybe_estimate(metric),
       case_weights = !!case_weights,
-      !!maybe_surv_prob(metric)
-    )
-}
-
-estimate_linear_pred <- function(
-  dat,
-  metric,
-  param_names,
-  outcome_name,
-  case_weights,
-  types
-) {
-  #  potentially need to work around submodel parameters since those are within .pred
-  dat <- unnest_parameters(dat, param_names)
-  dat |>
-    dplyr::group_by(!!!rlang::syms(param_names)) |>
-    metric(
-      truth = !!rlang::sym(outcome_name),
-      estimate = !!maybe_estimate(metric),
-      case_weights = !!case_weights,
+      # !!maybe_surv_prob(metric),
       !!maybe_linear_pred(metric)
     )
 }
