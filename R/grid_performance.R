@@ -196,8 +196,7 @@ estimate_surv <- function(
       truth = !!rlang::sym(outcome_name),
       estimate = !!maybe_estimate(metric),
       case_weights = !!case_weights,
-      # !!maybe_surv_prob(metric),
-      !!maybe_linear_pred(metric)
+      !!!c(maybe_surv_prob(metric), maybe_linear_pred(metric))
     )
 }
 
